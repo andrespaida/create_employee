@@ -19,10 +19,28 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to EC2
+      - name: Deploy and Run with Docker
         run: |
+          # Subir el proyecto a la instancia
           scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r . ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/create_employee
+
+          # Ejecutar comandos dentro de la instancia EC2
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo apt update
+            sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg
+
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+            echo \
+              "deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+              https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" \
+              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+            sudo apt update
+            sudo apt install -y docker-ce
+
+            sudo usermod -aG docker ubuntu
+
             cd /home/ubuntu/create_employee
             docker stop create_employee || true && docker rm create_employee || true
             docker build -t create_employee .
