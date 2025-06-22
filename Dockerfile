@@ -8,17 +8,17 @@ RUN apt-get update && apt-get install -y \
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Crear directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos al contenedor
+# Copiar todos los archivos del proyecto
 COPY . .
 
-# Instalar dependencias PHP
-RUN composer install --no-interaction --prefer-dist
+# Verificar archivos y ejecutar composer
+RUN ls -l && cat composer.json && composer install --no-interaction --prefer-dist || cat composer.json
 
-# Exponer el puerto
+# Exponer el puerto que usará el microservicio
 EXPOSE 8000
 
-# Comando para iniciar la app
+# Comando de inicio
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
