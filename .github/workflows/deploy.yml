@@ -21,7 +21,7 @@ jobs:
 
       - name: Archive project files (excluding .git)
         run: |
-          tar --exclude='.git' -czf create_employee.tar.gz .
+          tar --exclude='.git' --warning=no-file-changed -czf create_employee.tar.gz . || true
 
       - name: Copy files to EC2 and deploy with Docker
         run: |
@@ -46,7 +46,7 @@ jobs:
               sudo apt install -y docker-ce
             fi
 
-            # Ejecutar contenedor Docker
+            # Construir y ejecutar el contenedor
             cd /home/ubuntu/create_employee
             sudo docker stop create_employee || true
             sudo docker rm create_employee || true
