@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# Instalar dependencias de siste
+# Instalar dependencias del sistema necesarias
 RUN apt-get update && apt-get install -y \
     git unzip curl libzip-dev libpng-dev libonig-dev libxml2-dev zip \
     && docker-php-ext-install pdo pdo_mysql
@@ -8,17 +8,17 @@ RUN apt-get update && apt-get install -y \
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Crear directorio de la app
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos
+# Copiar archivos del proyecto
 COPY . .
 
-# Instalar dependencias PHP
-RUN composer install
+# Instalar dependencias PHP (sin desarrollo)
+RUN composer install --no-interaction --no-dev --prefer-dist
 
-# Expone el puerto
+# Exponer el puerto 8000
 EXPOSE 8000
 
-# Comando para iniciar el microservicio
+# Comando por defecto al iniciar el contenedor
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
