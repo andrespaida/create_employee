@@ -46,10 +46,13 @@ jobs:
               sudo apt install -y docker-ce
             fi
 
+            # Asegurar que Docker arranque automáticamente con el sistema
+            sudo systemctl enable docker
+
             # Construir y ejecutar el contenedor
             cd /home/ubuntu/create_employee
             sudo docker stop create_employee || true
             sudo docker rm create_employee || true
             sudo docker build -t create_employee .
-            sudo docker run -d --name create_employee -p 8000:8000 --env-file .env create_employee
+            sudo docker run -d --restart always --name create_employee -p 8000:8000 --env-file .env create_employee
           EOF
