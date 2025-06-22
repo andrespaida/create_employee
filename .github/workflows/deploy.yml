@@ -19,20 +19,21 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Archive project files
+      - name: Archive project files (clean export)
         run: |
-          tar --exclude='.git' -czf create_employee.tar.gz .
+          git archive --format=tar.gz --output=create_employee.tar.gz HEAD
 
-      - name: Copy files to EC2 and deploy
+      - name: Copy files to EC2 and deploy with Docker
         run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa create_employee.tar.gz ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no create_employee.tar.gz ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             rm -rf /home/ubuntu/create_employee
             mkdir -p /home/ubuntu/create_employee
             tar -xzf /home/ubuntu/create_employee.tar.gz -C /home/ubuntu/create_employee
             rm /home/ubuntu/create_employee.tar.gz
 
-            # Instalar Docker si no está
+            # Instalar Docker si no está presente
             if ! command -v docker &> /dev/null; then
               sudo apt update
               sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg
@@ -41,6 +42,7 @@ jobs:
               sudo apt update
               sudo apt install -y docker-ce
               sudo usermod -aG docker ubuntu
+              newgrp docker
             fi
 
             cd /home/ubuntu/create_employee
