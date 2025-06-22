@@ -1,0 +1,30 @@
+name: Deploy create-employee with Docker
+
+on:
+  push:
+    branches: [main, qa]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -r . ${{ secrets.EC2_HOST }}:/home/ubuntu/create_employee
+          ssh ${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/create_employee
+            docker stop create_employee || true && docker rm create_employee || true
+            docker build -t create_employee .
+            docker run -d --name create_employee -p 8000:8000 --env-file .env create_employee
+          EOF
