@@ -19,9 +19,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Archive all project files (including vendor)
+      - name: Archive project files (excluding .git)
         run: |
-          tar --exclude='.git' -czf create_employee.tar.gz .
+          tar --exclude='.git' --warning=no-file-changed -czf create_employee.tar.gz .
 
       - name: Copy files to EC2 and deploy with Docker
         run: |
@@ -36,7 +36,7 @@ jobs:
             tar -xzf /home/ubuntu/create_employee.tar.gz -C /home/ubuntu/create_employee
             rm /home/ubuntu/create_employee.tar.gz
 
-            # Instalar Docker si no está presente
+            # Instalar Docker si no está instalado
             if ! command -v docker &> /dev/null; then
               sudo apt update
               sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg
@@ -46,7 +46,6 @@ jobs:
               sudo apt install -y docker-ce
             fi
 
-            # Construir y ejecutar el contenedor
             cd /home/ubuntu/create_employee
             sudo docker stop create_employee || true
             sudo docker rm create_employee || true
