@@ -11,10 +11,8 @@ $dotenv->load();
 
 $app = AppFactory::create();
 
-// ✅ Middleware para parsear JSON del cuerpo
 $app->addBodyParsingMiddleware();
 
-// ✅ Middleware para habilitar CORS
 $app->add(function (Request $request, $handler) {
     $response = $handler->handle($request);
 
@@ -24,12 +22,10 @@ $app->add(function (Request $request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 });
 
-// ✅ Manejar preflight (OPTIONS) antes de las peticiones reales
 $app->options('/{routes:.+}', function (Request $request, Response $response) {
     return $response;
 });
 
-// Ruta JSON-RPC principal
 $app->post('/rpc', function (Request $request, Response $response) {
     $body = $request->getParsedBody();
     $method = $body['method'] ?? '';
