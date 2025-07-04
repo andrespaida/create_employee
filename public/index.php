@@ -11,10 +11,21 @@ $dotenv->load();
 
 $app = AppFactory::create();
 
-// ✅ Importante: permite parsear JSON del cuerpo
 $app->addBodyParsingMiddleware();
 
-// Ruta JSON-RPC principal
+$app->add(function (Request $request, $handler) {
+    $response = $handler->handle($request);
+
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*') // Puedes restringir a una IP si quieres
+        ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+});
+
+$app->options('/{routes:.+}', function (Request $request, Response $response) {
+    return $response;
+});
+
 $app->post('/rpc', function (Request $request, Response $response) {
     $body = $request->getParsedBody();
     $method = $body['method'] ?? '';
@@ -25,7 +36,6 @@ $app->post('/rpc', function (Request $request, Response $response) {
         return handleCreateEmployee($body, $response);
     }
 
-    // Si el método no es válido
     $response->getBody()->write(json_encode([
         'jsonrpc' => '2.0',
         'error' => ['code' => -32601, 'message' => 'Method not found'],
